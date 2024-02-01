@@ -12,7 +12,7 @@ jobs:
 
       - name: Build & run containers
         id: tests
-        run: docker compose up --build -d mongo1 mongo2 redis
+        run: cp ./.env.example .env && docker compose up --build -d mongo1 mongo2 redis
         env:
           DB_NAME: test
           DB_USER: root
