@@ -1,0 +1,52 @@
+name: push_on_stage
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build & run containers
+        id: tests
+        run: cp ./.env.example .env && docker compose up --build -d mongo1 mongo2 redis
+        env:
+          DB_NAME: test
+          DB_USER: root
+          DB_PASSWORD: test
+          DB_PORT: 27017
+
+          IN_MEMORY_STORAGE_PORT: 6379
+          IN_MEMORY_STORAGE_PASSWORD: test
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.20.0
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+
+      - name: Run pre-commit linters
+        uses: pre-commit/action@v3.0.0
+
+      - name: Run hadolint (Dockerfile linter)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+      - name: Run tests
+        run: |
+          sudo printf "\n127.0.0.1 mongo1\n127.0.0.1 mongo2\n" | sudo tee -a /etc/hosts && \
+          go test -v -p 1 ./...
+        env:
+          DB_NAME: test
+          DB_USER: root
+          DB_PASSWORD: test
+          DB_PORT: 27017
+
+          IN_MEMORY_STORAGE_PORT: 6379
+          IN_MEMORY_STORAGE_PASSWORD: test
