@@ -1,0 +1,850 @@
+# ATTENTION! Always validate input from requests: do not treat user's input just as a simple string.
+# By doing validation of fields we're preventing DB injections and XSS attacks.
+# For example instead of expecting just a single string for first name:
+# FirstName string
+# we should check that it strictly contains only letters:
+# FirstName string,validate=required,alpha
+# because in the first example instead of first name we can send <script>alert('hello')</script>
+
+openapi: 3.0.3
+
+info:
+  title: Accounts Back-end
+  version: 0.0.3
+
+tags:
+  - name: General
+  - name: Accounts
+
+servers:
+    - url: http://localhost{basePath}
+      description: Local server
+      variables:
+        basePath:
+          default: /api
+          description: Base path
+
+    - url: http://10.20.0.1{basePath}
+      description: Stage server
+      variables:
+        basePath:
+          default: /api
+          description: stage path
+
+paths:
+  /captcha:
+    post:
+      tags:
+        - General
+      summary: Returns different types of captcha
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateCaptchaRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptchaResponse'
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /countries:
+    get:
+      tags:
+        - General
+      description: Get all countries
+      summary: Returns map of supported countries with their Alpha 2 codes
+      operationId: GetCountries
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/sign-up-pipe:
+    post:
+      tags:
+        - Accounts
+      summary: Starts sign up pipeline
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSignUpPipeRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartSignUpPipeResponse'
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+
+  /accounts/sending-verif-code/sign-up:
+    post:
+      tags:
+        - Accounts
+      summary: Sends verification code to user's email and stores the code internally for further check
+      operationId: SendVerifCode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifCodeForSignUpRequest'
+      responses:
+        '204':
+          description: Successful operation
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/sign-up:
+    post:
+      tags:
+        - Accounts
+      summary: Signs up new account
+      description: When user has provided information, credentials will be sent on their email
+      operationId: SignUp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+      responses:
+        '204':
+          description: Successful operation
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/sending-verif-code/password-update:
+    post:
+      tags:
+        - Accounts
+      security:
+        - JWTAuth: [ ]
+      summary: Sends verification code for 'password update' pipeline
+      operationId: VerifCodeForPasswordUpdate
+      responses:
+        '204':
+          description: Successful operation
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/session/password:
+    put:
+      tags:
+        - Accounts
+      summary: Updates current password
+      description: In case of successful response - new refresh token will be generated
+      operationId: UpdatePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+
+        '422':
+          description: Client side error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/password-reset-request:
+    post:
+      tags:
+        - Accounts
+      summary: Sends URL(contains special token) for password reset to email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '204':
+          description: Successful operation
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /sending-verif-code/password-reset:
+    post:
+      tags:
+        - Accounts
+      summary: Resend verification code for password resetting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerifCodeForPasswordReset'
+      responses:
+        '204':
+          description: Successful operation
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/password-reset:
+    post:
+      tags:
+        - Accounts
+      summary: Resets password if provided token is correct
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+      responses:
+        '204':
+          description: Successful operation
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/sign-in:
+    post:
+      tags:
+        - Accounts
+      summary: Authenticates user
+      description: If the result is successful the tokens pair will be generated (access token and refresh token)
+      operationId: SignIn
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignInResponse'
+
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/sign-in/captcha-check:
+    get:
+      tags:
+        - Accounts
+      summary: Checks if captcha is required for a particular account to perform sign in
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IsCaptchaForSignInResponse'
+
+  /accounts/sending-verif-code/sessions-overflow:
+    post:
+      tags:
+        - Accounts
+      summary: Sends verification code to user's email to clean sessions
+      operationId: SendVerifCodeToCleanSessions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCodeToCleanSessionsRequest'
+      responses:
+        '204':
+          description: Successful operation
+
+        '422':
+          description: Client side error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/sessions-overflow-handling:
+    post:
+      tags:
+        - Accounts
+      summary: Cleans all account's sessions and imminently create new session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HandleSessionsOverflowRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandleSessionsOverflowResponse'
+
+        '422':
+          description: Client side error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/session/access-token:
+    post:
+      tags:
+        - Accounts
+      summary: Returns new access token
+      description: For retrieving access token valid refresh token should be provided
+      operationId: GetAccessToken
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenResponse'
+
+        '422':
+          description: Client side error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/session/logout:
+    post:
+      tags:
+        - Accounts
+      summary: Deletes session of user
+      operationId: Logout
+      responses:
+        '204':
+          description: Successful operation
+
+        '422':
+          description: Client side error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/{nickname}/public:
+    get:
+      tags:
+        - Accounts
+      summary: Returns user's information
+      description: Get user account information by user nickname
+      operationId: GetAccount
+      parameters:
+        - name: nickname
+          in: path
+          description: nickname of user to return
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '422':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts:
+    put:
+      tags:
+        - Accounts
+      security:
+        - JWTAuth: []
+      description: Update user information
+      summary: Updates user account information
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountRequest'
+      responses:
+        '204':
+          description: Successful operation
+        '422':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /accounts/email:
+    get:
+      tags:
+        - Accounts
+      summary: Checks if provided email is available
+      parameters:
+        - name: email
+          in: query
+          description: Email to check
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+              examples:
+                email already registered:
+                  value:
+                    available: false
+                email is not registered:
+                  value:
+                    available: true
+
+  /accounts/nickname:
+    get:
+      tags:
+        - Accounts
+      summary: Checks if provided nickname is available
+      description: Provide checking that nickname is not exists
+      parameters:
+        - name: nickname
+          in: query
+          description: Nickname to check
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+              examples:
+                nickname already registered:
+                  value:
+                    available: false
+                nickname is not registered:
+                  value:
+                    available: true
+
+components:
+  schemas:
+    # Requests:
+    ResendVerifCodeForPasswordReset:
+      type: object
+      properties:
+        email:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,email
+      required:
+        - email
+
+    PasswordResetRequest:
+      type: object
+      properties:
+        captcha_id:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,base64
+        provided_captcha_answer:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,numeric
+        email:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,email
+      required:
+        - captcha_id
+        - provided_captcha_answer
+        - email
+
+    PasswordReset:
+      type: object
+      properties:
+        verif_code:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,numeric
+        email:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,email
+        new_password:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,gte=10,password
+      required:
+        - verif_code
+        - email
+        - new_password
+
+    GenerateCaptchaRequest:
+      type: object
+      properties:
+        captcha_type:
+          type: integer
+          example: 1
+          x-oapi-codegen-extra-tags:
+            validate: required,oneof=1 2
+      required:
+        - captcha_type
+
+    StartSignUpPipeRequest:
+      type: object
+      properties:
+        captcha_id:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,base64
+        provided_captcha_answer:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,numeric
+        email:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,email
+        nickname:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,alphanum
+        password:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,gte=10,password
+      required:
+        - captcha_id
+        - provided_captcha_answer
+        - email
+        - nickname
+        - password
+
+    VerifCodeForSignUpRequest:
+      type: object
+      properties:
+        pipe_id:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,uuid
+      required:
+        - pipe_id
+
+    SignUpRequest:
+      type: object
+      properties:
+        verif_code:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,numeric
+        pipe_id:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,uuid
+      required:
+        - verif_code
+        - pipe_id
+
+    SignInRequest:
+      type: object
+      properties:
+        captcha_id:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,base64
+        provided_captcha_answer:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,numeric
+        email:
+          type: string
+          example: "example@mail.com"
+          x-oapi-codegen-extra-tags:
+            validate: required,email
+        password:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required
+      required:
+        - captcha_id
+        - provided_captcha_answer
+        - email
+        - password
+
+    UpdateAccountRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          example: "John"
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,alpha
+        last_name:
+          type: string
+          example: "Smith"
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,alpha
+        birth_date:
+          type: string
+          format: date
+          example: 1996-05-15
+          x-oapi-codegen-extra-tags:
+            validate: required
+        current_country:
+          type: string
+          example: "US"
+          x-oapi-codegen-extra-tags:
+            validate: required,country
+      required:
+        - first_name
+        - last_name
+        - birth_date
+        - current_country
+
+    UpdatePasswordRequest:
+      type: object
+      properties:
+        verif_code:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,numeric
+        feel_like_get_hacked:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,boolean
+        new_password:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,gte=10,password
+      required:
+        - verif_code
+        - feel_like_get_hacked
+        - new_password
+
+    HandleSessionsOverflowRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: "example@mail.com"
+          x-oapi-codegen-extra-tags:
+            validate: required,email
+        verif_code:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,numeric
+        pipe_id:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,uuid
+      required:
+        - email
+        - verif_code
+        - pipe_id
+
+    SendCodeToCleanSessionsRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: "example@mail.com"
+          x-oapi-codegen-extra-tags:
+            validate: required,email
+        pipe_id:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,uuid
+      required:
+        - email
+        - pipe_id
+
+    # Responses
+    StartSignUpPipeResponse:
+      type: object
+      properties:
+        pipe_id:
+          type: string
+      required:
+        - pipe_id
+
+    CaptchaResponse:
+      type: object
+      properties:
+        captcha:
+          type: string
+        captcha_id:
+          type: string
+        pipe_id:
+          type: string
+      required:
+        - captcha
+        - captcha_id
+
+    AccountResponse:
+      type: object
+      properties:
+        first_name:
+          type: string
+          example: "John"
+        last_name:
+          type: string
+          example: "Smith"
+        nickname:
+          type: string
+          format: "Splash"
+        email:
+          type: string
+          example: "example@mail.com"
+        birth_date:
+          type: string
+          format: date
+          example: 1996-05-15
+        current_country:
+          type: string
+          example: "US"
+      required:
+        - first_name
+        - last_name
+        - nickname
+        - email
+        - birth_date
+        - current_country
+
+    IsCaptchaForSignInResponse:
+      type: object
+      properties:
+        is_captcha:
+          type: boolean
+      required:
+        - is_captcha
+
+    SignInResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+      required:
+        - access_token
+
+    AccessTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+      required:
+        - access_token
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required:
+        - refresh_token
+
+    HandleSessionsOverflowResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+      required:
+        - access_token
+
+    ServerSideError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "something went wrong on our side"
+      required:
+        - error
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation error"
+        errors:
+          type: array
+          items:
+            type: string
+            example: "email is not valid"
+
+  securitySchemes:
+    JWTAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

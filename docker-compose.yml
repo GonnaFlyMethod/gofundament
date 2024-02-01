@@ -1,0 +1,116 @@
+# TODO: Create a separated docker compose container for > dev envs' needs:
+# '> dev' means environments that go after dev one: stage, prod, etc
+# 1) Set up security layers for each container: TLS, log in with credentials/with auth keys.
+# 2) For containers that use 'user credentials', as a method of authentication, set up user with limited rights.
+# 3) Those rights should be enough to perform needs of application.
+# 4) Remove ports' exposures for containers that should work only in the docker virtual network
+# 5) Remove 'swagger' container
+# 6) Double check volumes for each container
+# 7) Add restart policy for each container:
+  #restart_policy:
+  #  condition: on-failure
+  #  delay: 5s
+  #  max_attempts: 3
+  #  window: 120s
+# 8) Consider adding 'arbiter' node to mongo cluster or 2nd 'Secondary' node
+# 9) Double check 'depends_on' property for each container
+
+services:
+  # TODO: > dev requirements  ( '> dev' means environments that go after dev one: stage, prod, etc.)
+  # 1) setup TLS connection;
+  # 2) create a separated user for mongo db for app's needs. The user should have limited rights to the db
+  # 3) Set up replica set key
+  mongo1:
+    image: 'bitnami/mongodb:5.0.15'
+    container_name: mongo1
+    environment:
+      - MONGODB_DATABASE=${DB_NAME}
+      - MONGODB_ROOT_PASSWORD=${DB_PASSWORD}
+      - MONGODB_ADVERTISED_HOSTNAME=mongo1
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    volumes:
+      - ./db/init.js:/docker-entrypoint-initdb.d/init.js:ro
+      - 'mongodb_master_data:/bitnami'
+
+  mongo2:
+    image: 'bitnami/mongodb:5.0.15'
+    container_name: mongo2
+    depends_on:
+      - mongo1
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongo2
+      - MONGODB_REPLICA_SET_MODE=secondary
+      - MONGODB_INITIAL_PRIMARY_HOST=mongo1
+      - MONGODB_INITIAL_PRIMARY_PORT_NUMBER=${DB_PORT}
+      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=${DB_PASSWORD}
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+    ports:
+      - 27027:27017
+
+  # TODO: > dev requirements  ( '> dev' means environments that go after dev one: stage, prod, etc.)
+  # 1) Create user with limited rights for redis
+  # 2) Establish TLS connection with redis
+  # 3) Forbid the following commands
+  #   environment:
+  #       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+  redis:
+    image: redis:6.2.11-alpine
+    restart: on-failure
+    environment:
+      - REDIS_PASSWORD=${IN_MEMORY_STORAGE_PASSWORD}
+    ports:
+      - '${IN_MEMORY_STORAGE_PORT}:${IN_MEMORY_STORAGE_PORT}'
+    command: redis-server --protected-mode no  # Protected mode should be turned on, make research about it
+    volumes:
+      - redis_data:/data
+
+  tests_only:
+    build:
+      context: .
+      target: tests_only
+    env_file:
+      - .env
+
+  app:
+    build:
+      context: .
+      target: app
+    env_file:
+      - .env
+    ports:
+      - 127.0.0.1:8090:8090
+    depends_on:
+      - mongo1
+      - mongo2
+      - redis
+
+  swagger:
+    image: swaggerapi/swagger-ui:v4.15.5
+    build:
+      context: .
+      target: docs
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      SWAGGER_JSON: /openapi.yml
+      BASE_URL: /api/docs
+      LAYOUT: "BaseLayout"
+
+  nginx:
+    image: nginx:1.25.3
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      - NGINX_PORT=80
+    depends_on:
+      - app
+      - swagger
+
+volumes:
+  mongodb_master_data:
+  redis_data:

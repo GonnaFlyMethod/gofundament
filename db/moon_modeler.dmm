@@ -1,0 +1,270 @@
+{
+	"tables": {
+		"02243af3-b226-497f-95ef-c493118425bd": {
+			"id": "02243af3-b226-497f-95ef-c493118425bd",
+			"visible": true,
+			"name": "accounts",
+			"desc": "",
+			"estimatedSize": "",
+			"cols": [
+				{
+					"id": "286be525-e737-4f9e-9851-101ac000e765",
+					"name": "_id",
+					"datatype": "binData",
+					"param": "",
+					"pk": true,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": ""
+				},
+				{
+					"id": "3b9d261c-56b8-4f23-ae9c-1dbafad0f341",
+					"name": "first_name",
+					"datatype": "string",
+					"param": "",
+					"pk": false,
+					"nn": false,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "b169bee2-a914-417a-b247-5a28c5790877",
+					"name": "last_name",
+					"datatype": "string",
+					"param": "",
+					"pk": false,
+					"nn": false,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "434d8442-1663-41c3-99cb-e77140e9e3f2",
+					"name": "nickname",
+					"datatype": "string",
+					"param": "",
+					"pk": false,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "d0c14194-4c0e-4ed1-9179-ae8ca6f83305",
+					"name": "email",
+					"datatype": "string",
+					"param": "",
+					"pk": false,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "7c1dc326-c6ac-42a0-85ce-27ae0cbedd49",
+					"name": "birth_date",
+					"datatype": "date",
+					"param": "",
+					"pk": false,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "b72fbc50-f742-4a9d-a909-58d864b7505b",
+					"name": "current_country",
+					"datatype": "string",
+					"param": "",
+					"pk": false,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "2ec75cd0-82d3-4c3d-818b-c3b23ad23a25",
+					"name": "created_at",
+					"datatype": "timestamp",
+					"param": "",
+					"pk": false,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "1e5e787c-efd8-479a-88ec-9e50fe0d10c8",
+					"name": "updated_at",
+					"datatype": "timestamp",
+					"param": "",
+					"pk": false,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "6f7c0184-6260-4b1d-b667-c3743d4a6250",
+					"name": "encrypted_password",
+					"datatype": "binData",
+					"param": "",
+					"pk": false,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				},
+				{
+					"id": "24aaba77-0600-4523-acbe-3cc39fbf29c3",
+					"name": "token_key",
+					"datatype": "string",
+					"param": "",
+					"pk": false,
+					"nn": true,
+					"comment": "",
+					"defaultvalue": "",
+					"data": "",
+					"list": false,
+					"enum": "",
+					"validate": ""
+				}
+			],
+			"relations": [],
+			"lines": [],
+			"keys": [
+				{
+					"id": "bedb481e-f`26a-43d2-a46a-b742e5b8e796",
+					"name": "Primary key",
+					"isPk": true,
+					"cols": [
+						{
+							"id": "d4019e40-92b4-4001-994e-3cbd56c871f7",
+							"colid": "286be525-e737-4f9e-9851-101ac000e765"
+						}
+					]
+				}
+			],
+			"indexes": [],
+			"embeddable": false,
+			"generate": true,
+			"generateCustomCode": true,
+			"validationLevel": "na",
+			"validationAction": "na",
+			"collation": "",
+			"others": "",
+			"autoIndexId": false
+		}
+	},
+	"relations": {},
+	"notes": {},
+	"lines": {},
+	"model": {
+		"name": "gofundament-accounts",
+		"id": "64128f1a-a42e-46e6-bf26-c0255e93f918",
+		"activeDiagram": "b1c1bf56-0b06-4bd8-83ef-33c520683a7c",
+		"desc": "",
+		"path": "",
+		"type": "MONGODB",
+		"version": 1,
+		"parentTableInFkCols": true,
+		"caseConvention": "under",
+		"replaceSpace": "_",
+		"color": "transparent",
+		"sideSelections": true,
+		"isDirty": true,
+		"storedin": {
+			"major": 6,
+			"minor": 0,
+			"extra": 0
+		},
+		"embeddedInParentsIsDisplayed": true,
+		"schemaContainerIsDisplayed": false,
+		"cardinalityIsDisplayed": false,
+		"estimatedSizeIsDisplayed": false,
+		"writeFileParam": false,
+		"currentDisplayMode": "metadata",
+		"def_coltopk": true,
+		"def_validationLevel": "na",
+		"def_validationAction": "na",
+		"def_collation": "",
+		"def_others": "",
+		"lastSaved": "Wed Feb 22 2023 11:31:40 GMT+0300 (Moscow Standard Time)"
+	},
+	"otherObjects": {},
+	"diagrams": {
+		"b1c1bf56-0b06-4bd8-83ef-33c520683a7c": {
+			"name": "Main Diagram",
+			"description": "",
+			"id": "b1c1bf56-0b06-4bd8-83ef-33c520683a7c",
+			"keysgraphics": true,
+			"linegraphics": "detailed",
+			"zoom": 1,
+			"background": "transparent",
+			"lineColor": "transparent",
+			"isOpen": true,
+			"main": true,
+			"diagramItems": {
+				"02243af3-b226-497f-95ef-c493118425bd": {
+					"referencedItemId": "02243af3-b226-497f-95ef-c493118425bd",
+					"x": 156,
+					"y": 136,
+					"gHeight": 315,
+					"gWidth": 274,
+					"color": "#ffffff",
+					"background": "#03a9f4",
+					"resized": false,
+					"autoExpand": true
+				},
+				"413d0f1e-85df-4111-9a75-d94ccaa05f98": {
+					"referencedItemId": "413d0f1e-85df-4111-9a75-d94ccaa05f98",
+					"x": 400,
+					"y": 40,
+					"gHeight": 60,
+					"gWidth": 160,
+					"color": "#ffffff",
+					"background": "#8bc34a",
+					"resized": false,
+					"autoExpand": true
+				}
+			},
+			"scroll": {
+				"x": 0,
+				"y": 0
+			},
+			"type": "erd"
+		}
+	},
+	"order": [],
+	"collapsedTreeItems": [],
+	"reverseStats": {}
+}
