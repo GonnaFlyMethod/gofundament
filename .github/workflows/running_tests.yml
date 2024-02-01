@@ -12,7 +12,15 @@ jobs:
 
       - name: Build & run containers
         id: tests
-        run: cp ./.env.example .env && docker compose up --build -d mongo1 mongo2 redis
+        run: docker compose up --build -d mongo1 mongo2 redis
+        env:
+          DB_NAME: test
+          DB_USER: root
+          DB_PASSWORD: test
+          DB_PORT: 27017
+
+          IN_MEMORY_STORAGE_PORT: 6379
+          IN_MEMORY_STORAGE_PASSWORD: test
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -33,5 +41,12 @@ jobs:
       - name: Run tests
         run: |
           sudo printf "\n127.0.0.1 mongo1\n127.0.0.1 mongo2\n" | sudo tee -a /etc/hosts && \
-          export $(grep -v '^#' ./.env.example | xargs) && \
           go test -v -p 1 ./...
+        env:
+          DB_NAME: test
+          DB_USER: root
+          DB_PASSWORD: test
+          DB_PORT: 27017
+
+          IN_MEMORY_STORAGE_PORT: 6379
+          IN_MEMORY_STORAGE_PASSWORD: test
