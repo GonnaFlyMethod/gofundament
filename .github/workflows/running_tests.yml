@@ -33,5 +33,5 @@ jobs:
       - name: Run tests
         run: |
           sudo printf "\n127.0.0.1 mongo1\n127.0.0.1 mongo2\n" | sudo tee -a /etc/hosts && \
-          export $(grep -v '^#' ./.env | xargs) && \
+          export $(grep -v '^#' ./.env.example | xargs) && \
           go test -v -p 1 ./...
