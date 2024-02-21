@@ -538,6 +538,7 @@ components:
           type: string
           x-oapi-codegen-extra-tags:
             validate: required,numeric
+#       TODO: replace email field on password_request_id
         email:
           type: string
           x-oapi-codegen-extra-tags:

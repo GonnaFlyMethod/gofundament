@@ -851,6 +851,7 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 		return err
 	}
 
+	// TODO: replace dto.email as part of the pool on UUID for security
 	switch {
 	case doesPoolExist:
 		err := s.inMemoryStorage.AddVerifCodeToPool(ctx, operationPasswordReset, dto.Email, verifCode)
@@ -864,8 +865,6 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 		}
 	}
 
-	// TODO: inject code into jwt and send it as a link to user
-
 	go s.emailManager.SendVerifCodeForPasswordReset(dto.Email, verifCode)
 
 	return nil
@@ -873,7 +872,8 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 
 func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPasswordResetDTO) error {
 	// TODO first of all, check whether there's a ban for password reset request
-	// TODO: then get code from JWT
+
+	// TODO: replace email in DTO on password_request_id
 
 	isMember, err := s.inMemoryStorage.IsMemberOfVerifCodePool(
 		ctx, operationPasswordReset, dto.Email, dto.VerifCode)
