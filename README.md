@@ -61,7 +61,7 @@ make run_app_full
 ```
 Check the containers that will be run in `Makefile`
 
-### Connecting to MongoDB locally:
+### Connecting to MongoDB locally
 We recommend to use MongoDB Compass as a convenient GUI for mongoDB server.
 To connect to a docker container with MongoDB you can use follow URI:
 ```text
