@@ -61,6 +61,19 @@ make run_app_full
 ```
 Check the containers that will be run in `Makefile`
 
+### Connecting to MongoDB locally:
+We recommend to use MongoDB Compass as a convenient GUI for mongoDB server.
+To connect to a docker container with MongoDB you can use follow URI:
+```text
+mongodb://root:test@mongo1:27017/test?authSource=admin
+```
+
+### Connecting to Redis locally
+To connect to Redis server you can use redis-cli:
+```bash
+redis-cli -h 0.0.0.0 -p 6379
+```
+
 ### Running linters locally
 Linters are one of the most important component in the
 development process. To make sure locally that the code
