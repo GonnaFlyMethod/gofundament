@@ -9,8 +9,6 @@ import (
 )
 
 func TestClientSideErrorMarshaling(t *testing.T) {
-	t.Parallel()
-
 	const errTitle = "some error"
 	expectedJSON := fmt.Sprintf(`{"title":%q}`, errTitle)
 
@@ -22,8 +20,6 @@ func TestClientSideErrorMarshaling(t *testing.T) {
 }
 
 func TestValidationErrorMarshaling(t *testing.T) {
-	t.Parallel()
-
 	err := NewValidationError(
 		"validation error",
 		[]string{"some error", "some other error"},
