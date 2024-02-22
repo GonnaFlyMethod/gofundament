@@ -162,9 +162,6 @@ func TestService_RegistrationFlow(t *testing.T) {
 		pipeID, err := service.StartSignUpPipe(ctx, startSignUpPipeDto)
 		assert.NoError(t, err)
 
-		err = service.ResendVerifCodeForSignUp(ctx, pipeID)
-		assert.NoError(t, err)
-
 		verifCode := emailManagerMock.ReadInbox(ctx, t, emailOfUserInTest)
 
 		signUPDto := &SignUpDTO{
