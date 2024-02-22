@@ -13,8 +13,6 @@ import (
 )
 
 func TestGetUUIDFromPath(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		name        string
 		input       string
@@ -35,8 +33,6 @@ func TestGetUUIDFromPath(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			ctx := context.WithValue(context.Background(), chi.RouteCtxKey, &chi.Context{
 				URLParams: chi.RouteParams{
 					Keys:   []string{"id"},
@@ -58,8 +54,6 @@ func TestGetUUIDFromPath(t *testing.T) {
 }
 
 func TestGetNicknameFromPath(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		name        string
 		input       string
@@ -80,8 +74,6 @@ func TestGetNicknameFromPath(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			ctx := context.WithValue(context.Background(), chi.RouteCtxKey, &chi.Context{
 				URLParams: chi.RouteParams{
 					Keys:   []string{"nickname"},
@@ -103,8 +95,6 @@ func TestGetNicknameFromPath(t *testing.T) {
 }
 
 func TestGetEmailFromURL(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		name    string
 		input   string
@@ -130,8 +120,6 @@ func TestGetEmailFromURL(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			r := &http.Request{
 				URL: &url.URL{
 					RawQuery: "email=" + tc.input,
@@ -151,8 +139,6 @@ func TestGetEmailFromURL(t *testing.T) {
 }
 
 func TestGetNicknameFromURL(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		name    string
 		input   string
@@ -178,8 +164,6 @@ func TestGetNicknameFromURL(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			r := &http.Request{
 				URL: &url.URL{
 					RawQuery: "nickname=" + tc.input,
