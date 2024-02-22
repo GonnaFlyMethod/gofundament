@@ -59,6 +59,7 @@ type IsCaptchaForSignInResponse struct {
 type PasswordReset struct {
 	Email       string `json:"email" validate:"required,email"`
 	NewPassword string `json:"new_password" validate:"required,gte=10,password"`
+	PipeId      string `json:"pipe_id" validate:"required,uuid"`
 	VerifCode   string `json:"verif_code" validate:"required,numeric"`
 }
 
@@ -72,6 +73,11 @@ type PasswordResetRequest struct {
 // RefreshTokenResponse defines model for RefreshTokenResponse.
 type RefreshTokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
+}
+
+// ReqForPasswordResetResponse defines model for ReqForPasswordResetResponse.
+type ReqForPasswordResetResponse struct {
+	PipeId string `json:"pipe_id"`
 }
 
 // ResendVerifCodeForPasswordReset defines model for ResendVerifCodeForPasswordReset.
@@ -170,6 +176,9 @@ type PostAccountsPasswordResetJSONRequestBody = PasswordReset
 // PostAccountsPasswordResetRequestJSONRequestBody defines body for PostAccountsPasswordResetRequest for application/json ContentType.
 type PostAccountsPasswordResetRequestJSONRequestBody = PasswordResetRequest
 
+// PostAccountsSendingVerifCodePasswordResetJSONRequestBody defines body for PostAccountsSendingVerifCodePasswordReset for application/json ContentType.
+type PostAccountsSendingVerifCodePasswordResetJSONRequestBody = ResendVerifCodeForPasswordReset
+
 // SendVerifCodeToCleanSessionsJSONRequestBody defines body for SendVerifCodeToCleanSessions for application/json ContentType.
 type SendVerifCodeToCleanSessionsJSONRequestBody = SendCodeToCleanSessionsRequest
 
@@ -193,6 +202,3 @@ type PostAccountsSignUpPipeJSONRequestBody = StartSignUpPipeRequest
 
 // PostCaptchaJSONRequestBody defines body for PostCaptcha for application/json ContentType.
 type PostCaptchaJSONRequestBody = GenerateCaptchaRequest
-
-// PostSendingVerifCodePasswordResetJSONRequestBody defines body for PostSendingVerifCodePasswordReset for application/json ContentType.
-type PostSendingVerifCodePasswordResetJSONRequestBody = ResendVerifCodeForPasswordReset

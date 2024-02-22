@@ -58,6 +58,7 @@ type PasswordResetRequestDTO struct {
 
 type PerformPasswordResetDTO struct {
 	VerifCode   string
+	PipeID      string
 	Email       string
 	NewPassword string
 }

@@ -106,6 +106,8 @@ func GetAccountIDFromJWT(r *http.Request) (string, error) {
 	return "", errors.New("error has occurred while trying to get ID from JWT")
 }
 
+// TODO: investigate the true source of ip
+
 //nolint:nestif
 func GetRealIP(r *http.Request) (string, error) {
 	var ip string

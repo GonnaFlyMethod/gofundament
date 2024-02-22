@@ -48,6 +48,9 @@ func (h *Handler) SetUpRoutesAndAccessPolicy(router chi.Router) {
 		)
 	})
 
+	// TODO: handlers that are responsible for resending email should be documented appropriately in
+	// opeanapi spec
+
 	api.Get("/countries", h.getCountries)
 	api.Post("/captcha", h.generateCaptcha)
 
@@ -112,13 +115,21 @@ func (h *Handler) createPasswordResetRequest(w http.ResponseWriter, r *http.Requ
 		Email:                 requestBody.Email,
 	}
 
-	err := h.accountService.CreatePasswordResetRequest(ctx, dto)
+	pipeID, err := h.accountService.CreatePasswordResetRequest(ctx, dto)
 	if err != nil {
 		rest.WriteErrorResponse(ctx, err, w, nil)
 		return
 	}
 
-	rest.WriteResponse(ctx, []byte{}, http.StatusNoContent, w)
+	responseBody := rest.ReqForPasswordResetResponse{PipeId: pipeID}
+
+	response, err := json.Marshal(responseBody)
+	if err != nil {
+		rest.WriteErrorResponse(ctx, err, w, nil)
+		return
+	}
+
+	rest.WriteResponse(ctx, response, http.StatusOK, w)
 }
 
 func (h *Handler) performPasswordReset(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +144,7 @@ func (h *Handler) performPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 	dto := &account.PerformPasswordResetDTO{
 		VerifCode:   requestBody.VerifCode,
+		PipeID:      requestBody.PipeId,
 		Email:       requestBody.Email,
 		NewPassword: requestBody.NewPassword,
 	}

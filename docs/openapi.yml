@@ -201,8 +201,12 @@ paths:
             schema:
               $ref: '#/components/schemas/PasswordResetRequest'
       responses:
-        '204':
-          description: Successful operation
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReqForPasswordResetResponse'
 
         '422':
           description: Invalid ID supplied
@@ -211,7 +215,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
 
-  /sending-verif-code/password-reset:
+  /accounts/sending-verif-code/password-reset:
     post:
       tags:
         - Accounts
@@ -538,7 +542,10 @@ components:
           type: string
           x-oapi-codegen-extra-tags:
             validate: required,numeric
-#       TODO: replace email field on password_request_id
+        pipe_id:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required,uuid
         email:
           type: string
           x-oapi-codegen-extra-tags:
@@ -549,6 +556,7 @@ components:
             validate: required,gte=10,password
       required:
         - verif_code
+        - pipe_id
         - email
         - new_password
 
@@ -814,6 +822,14 @@ components:
           type: string
       required:
         - refresh_token
+
+    ReqForPasswordResetResponse:
+      type: object
+      properties:
+        pipe_id:
+          type: string
+      required:
+        - pipe_id
 
     HandleSessionsOverflowResponse:
       type: object

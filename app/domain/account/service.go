@@ -345,6 +345,8 @@ const (
 
 const maxNumOfSessionsPerAccount = 100
 
+// TODO: func allows(should not) to generate multiple sessions with the same captcha id and answer
+
 //nolint:gocyclo,nestif,maintidx
 func (s *Service) SignIn(ctx context.Context, dto *SignInDTO, keyReader auth.KeyReader) (*SignInResultDTO, error) {
 	gotGlobalBan, err := s.inMemoryStorage.IsSignInGlobalBan(ctx, dto.IP)
@@ -813,61 +815,68 @@ func (s *Service) GetAccessToken(ctx context.Context, refreshToken string, keyRe
 // CreatePasswordResetRequest TODO: implement security mechanism
 // -> - Sending verif code
 // ->->->[Ban for 30 min BY IP]
-func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordResetRequestDTO) error {
+func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordResetRequestDTO) (string, error) {
 	result, err := s.accountRepository.CountUsersWithEmail(ctx, dto.Email)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if result == 0 {
 		errMsg := "the provided email is not associated with a personal user account"
-		return common.NewClientSideError(errMsg)
+		return "", common.NewClientSideError(errMsg)
 	}
 
 	correctCaptchaAnswer, err := s.inMemoryStorage.ReadCaptchaAnswer(ctx, dto.CaptchaID)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if dto.ProvidedCaptchaAnswer != correctCaptchaAnswer {
 		if err := s.inMemoryStorage.DeleteCaptchaAnswer(ctx, dto.CaptchaID); err != nil {
-			return err
+			return "", err
 		}
 
-		return common.NewClientSideError("provided captcha answer is invalid")
+		return "", common.NewClientSideError("provided captcha answer is invalid")
 	}
 
 	if err := s.inMemoryStorage.DeleteCaptchaAnswer(ctx, dto.CaptchaID); err != nil {
-		return err
+		return "", err
 	}
 
 	verifCode, err := generateVerificationCode()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	doesPoolExist, err := s.inMemoryStorage.DoesVerifCodePoolExist(ctx, operationPasswordReset, dto.Email)
 	if err != nil {
-		return err
+		return "", err
 	}
+
+	generatedUUID, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+
+	generatedUUIDAsString := generatedUUID.String()
 
 	// TODO: replace dto.email as part of the pool on UUID for security
 	switch {
 	case doesPoolExist:
-		err := s.inMemoryStorage.AddVerifCodeToPool(ctx, operationPasswordReset, dto.Email, verifCode)
+		err := s.inMemoryStorage.AddVerifCodeToPool(ctx, operationPasswordReset, generatedUUIDAsString, verifCode)
 		if err != nil {
-			return err
+			return "", err
 		}
 	default:
-		err := s.inMemoryStorage.InitVerifCodePool(ctx, operationPasswordReset, dto.Email, verifCode)
+		err := s.inMemoryStorage.InitVerifCodePool(ctx, operationPasswordReset, generatedUUIDAsString, verifCode)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
 	go s.emailManager.SendVerifCodeForPasswordReset(dto.Email, verifCode)
 
-	return nil
+	return generatedUUIDAsString, nil
 }
 
 func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPasswordResetDTO) error {
@@ -876,7 +885,7 @@ func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPassword
 	// TODO: replace email in DTO on password_request_id
 
 	isMember, err := s.inMemoryStorage.IsMemberOfVerifCodePool(
-		ctx, operationPasswordReset, dto.Email, dto.VerifCode)
+		ctx, operationPasswordReset, dto.PipeID, dto.VerifCode)
 	if err != nil {
 		return err
 	}
@@ -903,7 +912,7 @@ func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPassword
 
 	go s.emailManager.SendPasswordResetNotification(dto.Email)
 
-	return s.inMemoryStorage.DeleteVerifCodePool(ctx, operationPasswordReset, dto.Email)
+	return s.inMemoryStorage.DeleteVerifCodePool(ctx, operationPasswordReset, dto.PipeID)
 }
 
 func (s *Service) SendVerifCodeForPasswordUpdate(ctx context.Context, accountID string) error {
