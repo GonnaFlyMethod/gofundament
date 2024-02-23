@@ -137,17 +137,6 @@ func TestService_SendVerifCodeForPasswordUpdate(t *testing.T) {
 	})
 }
 
-func TestService_CreatePasswordResetRequest(t *testing.T) {
-	ctx := context.TODO()
-
-	common.ClearTestRedis(ctx)
-	common.ClearTestDB(ctx, t)
-
-	entity := getTestEntity(t)
-	createTestAccount(ctx, t, entity, "test_password123")
-
-}
-
 func TestService_GetAccessToken(t *testing.T) {
 	t.Run("testing behaviour that depends on validity of refresh token", func(t *testing.T) {
 		ctx := context.TODO()

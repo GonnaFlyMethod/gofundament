@@ -811,5 +811,4 @@ func TestService_PasswordResetFlow(t *testing.T) {
 			})
 		}
 	})
-
 }
