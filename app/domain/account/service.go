@@ -882,8 +882,6 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPasswordResetDTO) error {
 	// TODO first of all, check whether there's a ban for password reset request
 
-	// TODO: replace email in DTO on password_request_id
-
 	isMember, err := s.inMemoryStorage.IsMemberOfVerifCodePool(
 		ctx, operationPasswordReset, dto.PipeID, dto.VerifCode)
 	if err != nil {
@@ -891,7 +889,7 @@ func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPassword
 	}
 
 	if !isMember {
-		return common.NewClientSideError("invalid verification code")
+		return common.NewClientSideError("invalid verif code or/and pipeline id")
 	}
 
 	entity, err := s.accountRepository.ReadByEmail(ctx, dto.Email)

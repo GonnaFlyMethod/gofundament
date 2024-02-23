@@ -690,52 +690,57 @@ func TestService_UpdatePasswordFlow(t *testing.T) {
 }
 
 func TestService_PasswordResetFlow(t *testing.T) {
-	ctx := context.TODO()
-	common.ClearTestRedis(ctx)
-	common.ClearTestDB(ctx, t)
+	t.Run("test happy path for password reset", func(t *testing.T) {
+		ctx := context.TODO()
+		common.ClearTestRedis(ctx)
+		common.ClearTestDB(ctx, t)
 
-	entity := getTestEntity(t)
-	createTestAccount(ctx, t, entity, "existing_password123123")
+		entity := getTestEntity(t)
+		createTestAccount(ctx, t, entity, "existing_password123123")
 
-	service, emailManagerMock := getTestServiceAndEmailManager()
+		service, emailManagerMock := getTestServiceAndEmailManager()
 
-	const captchaTypeImage = 1
+		const captchaTypeImage = 1
 
-	captchaID, _, err := service.GenerateCaptcha(ctx, captchaTypeImage)
-	assert.NoError(t, err)
+		captchaID, _, err := service.GenerateCaptcha(ctx, captchaTypeImage)
+		assert.NoError(t, err)
 
-	correctCaptchaAnswer := readCaptchaAnswer(ctx, t, captchaID)
+		correctCaptchaAnswer := readCaptchaAnswer(ctx, t, captchaID)
 
-	passwordResetRequestDto := &PasswordResetRequestDTO{
-		CaptchaID:             captchaID,
-		ProvidedCaptchaAnswer: correctCaptchaAnswer,
-		Email:                 entity.email,
-	}
+		passwordResetRequestDto := &PasswordResetRequestDTO{
+			CaptchaID:             captchaID,
+			ProvidedCaptchaAnswer: correctCaptchaAnswer,
+			Email:                 entity.email,
+		}
 
-	err = service.CreatePasswordResetRequest(ctx, passwordResetRequestDto)
-	assert.NoError(t, err)
+		pipeID, err := service.CreatePasswordResetRequest(ctx, passwordResetRequestDto)
+		assert.NotEmpty(t, pipeID)
+		assert.NoError(t, err)
 
-	verifCode := emailManagerMock.ReadInbox(ctx, t, entity.email)
+		verifCode := emailManagerMock.ReadInbox(ctx, t, entity.email)
 
-	const newPassword = "new_password123123"
+		const newPassword = "new_password123123"
 
-	peformPasswordResetDto := &PerformPasswordResetDTO{
-		VerifCode:   verifCode,
-		Email:       entity.email,
-		NewPassword: newPassword,
-	}
+		peformPasswordResetDto := &PerformPasswordResetDTO{
+			VerifCode:   verifCode,
+			PipeID:      pipeID,
+			Email:       entity.email,
+			NewPassword: newPassword,
+		}
 
-	err = service.PerformPasswordReset(ctx, peformPasswordResetDto)
-	assert.NoError(t, err)
+		err = service.PerformPasswordReset(ctx, peformPasswordResetDto)
+		assert.NoError(t, err)
 
-	actualEncryptedPassword := readEncryptedPassword(ctx, t, entity.id)
+		actualEncryptedPassword := readEncryptedPassword(ctx, t, entity.id)
 
-	err = bcrypt.CompareHashAndPassword(actualEncryptedPassword, []byte(newPassword))
-	assert.NoError(t, err)
+		err = bcrypt.CompareHashAndPassword(actualEncryptedPassword, []byte(newPassword))
+		assert.NoError(t, err)
 
-	passwordResetNotification := emailManagerMock.ReadInbox(ctx, t, entity.email)
+		passwordResetNotification := emailManagerMock.ReadInbox(ctx, t, entity.email)
 
-	assert.Equal(t, testPasswordResetNotification, passwordResetNotification)
+		assert.Equal(t, testPasswordResetNotification, passwordResetNotification)
 
-	assertInMemoryStorageIsCleaned(ctx, t)
+		assertInMemoryStorageIsCleaned(ctx, t)
+	})
+
 }
