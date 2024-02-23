@@ -812,10 +812,22 @@ func (s *Service) GetAccessToken(ctx context.Context, refreshToken string, keyRe
 	return accessToken, nil
 }
 
+// TODO: should be moved into high-level config in the future
+const attemptsToGetPasswordResetBan = 5
+
 // CreatePasswordResetRequest TODO: implement security mechanism
 // -> - Sending verif code
 // ->->->[Ban for 30 min BY IP]
 func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordResetRequestDTO) (string, error) {
+	gotGlobalBan, err := s.inMemoryStorage.IsPasswordResetGlobalBan(ctx, dto.IP)
+	if err != nil {
+		return "", err
+	}
+
+	if gotGlobalBan {
+		return "", common.NewClientSideError("global ban for password reset request")
+	}
+
 	result, err := s.accountRepository.CountUsersWithEmail(ctx, dto.Email)
 	if err != nil {
 		return "", err
@@ -843,6 +855,16 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 		return "", err
 	}
 
+	actualNumOfAttempts := s.inMemoryStorage.UpdatePasswordResetTracker(ctx, dto.IP)
+
+	if actualNumOfAttempts == attemptsToGetPasswordResetBan {
+		if err = s.inMemoryStorage.SetPasswordResetBanAndDelPassworResetTracker(ctx, dto.IP); err != nil {
+			return "", err
+		}
+
+		return "", common.NewClientSideError("global ban for password reset request")
+	}
+
 	verifCode, err := generateVerificationCode()
 	if err != nil {
 		return "", err
@@ -860,7 +882,6 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 
 	generatedUUIDAsString := generatedUUID.String()
 
-	// TODO: replace dto.email as part of the pool on UUID for security
 	switch {
 	case doesPoolExist:
 		err := s.inMemoryStorage.AddVerifCodeToPool(ctx, operationPasswordReset, generatedUUIDAsString, verifCode)
@@ -880,8 +901,6 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 }
 
 func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPasswordResetDTO) error {
-	// TODO first of all, check whether there's a ban for password reset request
-
 	isMember, err := s.inMemoryStorage.IsMemberOfVerifCodePool(
 		ctx, operationPasswordReset, dto.PipeID, dto.VerifCode)
 	if err != nil {

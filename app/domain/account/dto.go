@@ -51,6 +51,7 @@ type HandleSessionsOverflowDTO struct {
 }
 
 type PasswordResetRequestDTO struct {
+	IP                    string
 	CaptchaID             string
 	ProvidedCaptchaAnswer string
 	Email                 string

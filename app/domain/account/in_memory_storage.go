@@ -26,6 +26,9 @@ const (
 	signInCaptchaLimitKey   = "sign_in_limit:captcha:%s"
 	signAccountBanLimitKey  = "sign_in_limit:account_ban:%s"
 
+	passwordResetReqTrackerKey = "password_reset_tracker:global_ban:%s"
+	passwordResetReqBanKey     = "password_reset_limit:global_ban:%s"
+
 	timeoutKey = "email_code_timeout:%s:%s"
 
 	emailCodeTrackerKey = "email_code_tracker:%s:%s"
@@ -730,6 +733,53 @@ func (g *generalInMemoryStorage) DeleteSessionsOverflowStatus(ctx context.Contex
 	err := g.client.Del(ctx, redisKey).Err()
 	if err != nil {
 		return errors.Wrap(err, "error occurred while deleting sessions overflow status")
+	}
+
+	return nil
+}
+
+func (g *generalInMemoryStorage) IsPasswordResetGlobalBan(ctx context.Context, ip string) (bool, error) {
+	redisKey := fmt.Sprintf(passwordResetReqBanKey, ip)
+
+	result, err := g.client.Exists(ctx, redisKey).Result()
+	if err != nil {
+		return false, errors.Wrap(err,
+			"error occurred while checking existence of global ban for password reset request")
+	}
+
+	return result == redisKeyExists, nil
+}
+
+func (g *generalInMemoryStorage) UpdatePasswordResetTracker(ctx context.Context, ip string) int {
+	redisKey := fmt.Sprintf(passwordResetReqTrackerKey, ip)
+	currentVal := g.client.Incr(ctx, redisKey).Val()
+
+	return int(currentVal)
+}
+
+func (g *generalInMemoryStorage) SetPasswordResetBanAndDelPassworResetTracker(ctx context.Context, ip string) error {
+	redisPipeline := g.client.TxPipeline()
+
+	redisKeyGlobalBanLimit := fmt.Sprintf(passwordResetReqBanKey, ip)
+
+	randExpirationInRange, err := common.RandomIntegerSecure(25, 50)
+	if err != nil {
+		return err
+	}
+
+	expiration := time.Duration(randExpirationInRange) * time.Minute
+
+	redisPipeline.Set(ctx, redisKeyGlobalBanLimit, "1", expiration)
+
+	redisKeyBanTracker := fmt.Sprintf(passwordResetReqTrackerKey, ip)
+
+	redisPipeline.Del(ctx, redisKeyBanTracker)
+
+	if _, err := redisPipeline.Exec(ctx); err != nil {
+		errWrappingMsg := "error occurred while performing following operations in txn: " +
+			"1) Setting global ban limit for password reset request; " +
+			"2) Deleting global ban tracker for password reset request"
+		return errors.Wrap(err, errWrappingMsg)
 	}
 
 	return nil
