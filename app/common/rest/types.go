@@ -80,11 +80,6 @@ type ReqForPasswordResetResponse struct {
 	PipeId string `json:"pipe_id"`
 }
 
-// ResendVerifCodeForPasswordReset defines model for ResendVerifCodeForPasswordReset.
-type ResendVerifCodeForPasswordReset struct {
-	Email string `json:"email" validate:"required,email"`
-}
-
 // SendCodeToCleanSessionsRequest defines model for SendCodeToCleanSessionsRequest.
 type SendCodeToCleanSessionsRequest struct {
 	Email  string `json:"email" validate:"required,email"`
@@ -175,9 +170,6 @@ type PostAccountsPasswordResetJSONRequestBody = PasswordReset
 
 // PostAccountsPasswordResetRequestJSONRequestBody defines body for PostAccountsPasswordResetRequest for application/json ContentType.
 type PostAccountsPasswordResetRequestJSONRequestBody = PasswordResetRequest
-
-// PostAccountsSendingVerifCodePasswordResetJSONRequestBody defines body for PostAccountsSendingVerifCodePasswordReset for application/json ContentType.
-type PostAccountsSendingVerifCodePasswordResetJSONRequestBody = ResendVerifCodeForPasswordReset
 
 // SendVerifCodeToCleanSessionsJSONRequestBody defines body for SendVerifCodeToCleanSessions for application/json ContentType.
 type SendVerifCodeToCleanSessionsJSONRequestBody = SendCodeToCleanSessionsRequest

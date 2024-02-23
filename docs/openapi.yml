@@ -215,27 +215,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
 
-  /accounts/sending-verif-code/password-reset:
-    post:
-      tags:
-        - Accounts
-      summary: Resend verification code for password resetting
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResendVerifCodeForPasswordReset'
-      responses:
-        '204':
-          description: Successful operation
-
-        '422':
-          description: Invalid ID supplied
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationError'
-
   /accounts/password-reset:
     post:
       tags:
