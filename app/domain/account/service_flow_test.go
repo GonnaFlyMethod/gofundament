@@ -743,4 +743,73 @@ func TestService_PasswordResetFlow(t *testing.T) {
 		assertInMemoryStorageIsCleaned(ctx, t)
 	})
 
+	t.Run("invalid input parameters for finishing password reset procedure", func(t *testing.T) {
+		ctx := context.TODO()
+
+		common.ClearTestRedis(ctx)
+		common.ClearTestDB(ctx, t)
+
+		entity := getTestEntity(t)
+		createTestAccount(ctx, t, entity, "existing_password123123")
+
+		service, emailManagerMock := getTestServiceAndEmailManager()
+
+		const captchaTypeImage = 1
+
+		captchaID, _, err := service.GenerateCaptcha(ctx, captchaTypeImage)
+		assert.NoError(t, err)
+
+		correctCaptchaAnswer := readCaptchaAnswer(ctx, t, captchaID)
+
+		passwordResetRequestDto := &PasswordResetRequestDTO{
+			CaptchaID:             captchaID,
+			ProvidedCaptchaAnswer: correctCaptchaAnswer,
+			Email:                 entity.email,
+		}
+
+		correctPipeID, err := service.CreatePasswordResetRequest(ctx, passwordResetRequestDto)
+		assert.NotEmpty(t, correctPipeID)
+		assert.NoError(t, err)
+
+		correctVerifCode := emailManagerMock.ReadInbox(ctx, t, entity.email)
+
+		incorrectPipeID, err := uuid.NewRandom()
+		assert.NoError(t, err)
+
+		incorrectPipeIDAsStr := incorrectPipeID.String()
+
+		testCases := []struct {
+			name      string
+			verifCode string
+			pipeID    string
+		}{
+			{
+				name:      "invalid verif code",
+				verifCode: common.ReverseString(correctVerifCode),
+				pipeID:    correctPipeID,
+			},
+			{
+				name:      "invalid pipe id",
+				verifCode: correctVerifCode,
+				pipeID:    incorrectPipeIDAsStr,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				const newPassword = "new_password123123"
+
+				peformPasswordResetDto := &PerformPasswordResetDTO{
+					VerifCode:   tc.verifCode,
+					PipeID:      tc.pipeID,
+					Email:       entity.email,
+					NewPassword: newPassword,
+				}
+
+				err = service.PerformPasswordReset(ctx, peformPasswordResetDto)
+				common.AssertClientSideError(t, err)
+			})
+		}
+	})
+
 }
