@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -101,8 +100,6 @@ func (h *Handler) getCountries(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) createPasswordResetRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Print(r.Header)
-
 	ctx := r.Context()
 
 	var requestBody rest.PasswordResetRequest
