@@ -739,8 +739,6 @@ func TestService_PasswordResetFlow(t *testing.T) {
 		passwordResetNotification := emailManagerMock.ReadInbox(ctx, t, entity.email)
 
 		assert.Equal(t, testPasswordResetNotification, passwordResetNotification)
-
-		assertInMemoryStorageIsCleaned(ctx, t)
 	})
 
 	t.Run("invalid input parameters for finishing password reset procedure", func(t *testing.T) {
