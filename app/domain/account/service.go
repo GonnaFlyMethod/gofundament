@@ -858,12 +858,19 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 	actualNumOfAttempts := s.inMemoryStorage.UpdatePasswordResetTracker(ctx, dto.IP)
 
 	if actualNumOfAttempts == attemptsToGetPasswordResetBan {
-		if err = s.inMemoryStorage.SetPasswordResetBanAndDelPassworResetTracker(ctx, dto.IP); err != nil {
+		if err := s.inMemoryStorage.SetPasswordResetBanAndDelPasswordResetTracker(ctx, dto.IP); err != nil {
 			return "", err
 		}
 
 		return "", common.NewClientSideError("global ban for password reset request")
 	}
+
+	generatedUUID, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+
+	pipeID := generatedUUID.String()
 
 	verifCode, err := generateVerificationCode()
 	if err != nil {
@@ -875,21 +882,14 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 		return "", err
 	}
 
-	generatedUUID, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
-
-	generatedUUIDAsString := generatedUUID.String()
-
 	switch {
 	case doesPoolExist:
-		err := s.inMemoryStorage.AddVerifCodeToPool(ctx, operationPasswordReset, generatedUUIDAsString, verifCode)
+		err := s.inMemoryStorage.AddVerifCodeToPool(ctx, operationPasswordReset, pipeID, verifCode)
 		if err != nil {
 			return "", err
 		}
 	default:
-		err := s.inMemoryStorage.InitVerifCodePool(ctx, operationPasswordReset, generatedUUIDAsString, verifCode)
+		err := s.inMemoryStorage.InitVerifCodePool(ctx, operationPasswordReset, pipeID, verifCode)
 		if err != nil {
 			return "", err
 		}
@@ -897,7 +897,7 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, dto *PasswordR
 
 	go s.emailManager.SendVerifCodeForPasswordReset(dto.Email, verifCode)
 
-	return generatedUUIDAsString, nil
+	return generatedUUID.String(), nil
 }
 
 func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPasswordResetDTO) error {
@@ -908,7 +908,7 @@ func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPassword
 	}
 
 	if !isMember {
-		return common.NewClientSideError("invalid verif code or/and pipeline id")
+		return common.NewClientSideError("invalid verification code or/and pipeline id")
 	}
 
 	entity, err := s.accountRepository.ReadByEmail(ctx, dto.Email)
@@ -929,7 +929,11 @@ func (s *Service) PerformPasswordReset(ctx context.Context, dto *PerformPassword
 
 	go s.emailManager.SendPasswordResetNotification(dto.Email)
 
-	return s.inMemoryStorage.DeleteVerifCodePool(ctx, operationPasswordReset, dto.PipeID)
+	if err := s.inMemoryStorage.DeleteVerifCodePool(ctx, operationPasswordReset, dto.PipeID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) SendVerifCodeForPasswordUpdate(ctx context.Context, accountID string) error {

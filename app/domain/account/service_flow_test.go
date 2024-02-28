@@ -708,6 +708,7 @@ func TestService_PasswordResetFlow(t *testing.T) {
 		correctCaptchaAnswer := readCaptchaAnswer(ctx, t, captchaID)
 
 		passwordResetRequestDto := &PasswordResetRequestDTO{
+			IP:                    "83.131.23.200",
 			CaptchaID:             captchaID,
 			ProvidedCaptchaAnswer: correctCaptchaAnswer,
 			Email:                 entity.email,
@@ -808,5 +809,59 @@ func TestService_PasswordResetFlow(t *testing.T) {
 				common.AssertClientSideError(t, err)
 			})
 		}
+	})
+
+	t.Run("test global ban for performing password reset", func(t *testing.T) {
+		ctx := context.TODO()
+
+		common.ClearTestDB(ctx, t)
+		common.ClearTestRedis(ctx)
+
+		entity := getTestEntity(t)
+		createTestAccount(ctx, t, entity, "test_password123")
+
+		service := getTestService()
+
+		const captchaTypeImage = 1
+
+		redisClient := common.GetTestRedisClient()
+
+		dto := &PasswordResetRequestDTO{
+			IP:    "83.131.23.200",
+			Email: entity.email,
+		}
+
+		for i := 0; i < attemptsToGetPasswordResetBan-1; i++ {
+			captchaID, _, err := service.GenerateCaptcha(ctx, captchaTypeImage)
+			assert.NoError(t, err)
+
+			redisKeyForCaptcha := fmt.Sprintf(captchaKey, captchaID)
+
+			correctCaptchaAnswer, err := redisClient.Get(ctx, redisKeyForCaptcha).Result()
+			assert.NoError(t, err)
+
+			dto.CaptchaID = captchaID
+			dto.ProvidedCaptchaAnswer = correctCaptchaAnswer
+
+			pipeID, err := service.CreatePasswordResetRequest(ctx, dto)
+
+			assert.NotEmpty(t, pipeID)
+			assert.NoError(t, err)
+		}
+
+		captchaID, _, err := service.GenerateCaptcha(ctx, captchaTypeImage)
+		assert.NoError(t, err)
+
+		redisKeyForCaptcha := fmt.Sprintf(captchaKey, captchaID)
+
+		correctCaptchaAnswer, err := redisClient.Get(ctx, redisKeyForCaptcha).Result()
+		assert.NoError(t, err)
+
+		dto.CaptchaID = captchaID
+		dto.ProvidedCaptchaAnswer = correctCaptchaAnswer
+
+		pipeID, err := service.CreatePasswordResetRequest(ctx, dto)
+		assert.Empty(t, pipeID)
+		common.AssertClientSideError(t, err)
 	})
 }

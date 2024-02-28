@@ -750,6 +750,25 @@ func (g *generalInMemoryStorage) IsPasswordResetGlobalBan(ctx context.Context, i
 	return result == redisKeyExists, nil
 }
 
+func (g *generalInMemoryStorage) InitPasswordResetTracker(ctx context.Context, ip string) error {
+	redisPipeline := g.client.TxPipeline()
+
+	redisKey := fmt.Sprintf(passwordResetReqTrackerKey, ip)
+
+	redisPipeline.Incr(ctx, redisKey)
+	redisPipeline.Expire(ctx, redisKey, expiration1Hour)
+
+	if _, err := redisPipeline.Exec(ctx); err != nil {
+		errMsg := "error occurred while performing multiple actions in txn: " +
+			"1) initializing password reset tracker; " +
+			"2) setting ttl for password reset tracker"
+
+		return errors.Wrap(err, errMsg)
+	}
+
+	return nil
+}
+
 func (g *generalInMemoryStorage) UpdatePasswordResetTracker(ctx context.Context, ip string) int {
 	redisKey := fmt.Sprintf(passwordResetReqTrackerKey, ip)
 	currentVal := g.client.Incr(ctx, redisKey).Val()
@@ -757,7 +776,7 @@ func (g *generalInMemoryStorage) UpdatePasswordResetTracker(ctx context.Context,
 	return int(currentVal)
 }
 
-func (g *generalInMemoryStorage) SetPasswordResetBanAndDelPassworResetTracker(ctx context.Context, ip string) error {
+func (g *generalInMemoryStorage) SetPasswordResetBanAndDelPasswordResetTracker(ctx context.Context, ip string) error {
 	redisPipeline := g.client.TxPipeline()
 
 	redisKeyGlobalBanLimit := fmt.Sprintf(passwordResetReqBanKey, ip)
@@ -777,8 +796,8 @@ func (g *generalInMemoryStorage) SetPasswordResetBanAndDelPassworResetTracker(ct
 
 	if _, err := redisPipeline.Exec(ctx); err != nil {
 		errWrappingMsg := "error occurred while performing following operations in txn: " +
-			"1) Setting global ban limit for password reset request; " +
-			"2) Deleting global ban tracker for password reset request"
+			"1) setting global ban limit for password reset request; " +
+			"2) deleting global ban tracker for password reset request"
 		return errors.Wrap(err, errWrappingMsg)
 	}
 

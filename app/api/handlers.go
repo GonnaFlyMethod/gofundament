@@ -128,6 +128,22 @@ func (h *Handler) createPasswordResetRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	cookie := http.Cookie{
+		Name:  "pipe_id_for_password_reset",
+		Value: pipeID,
+
+		Path: "/api/accounts/password-reset",
+
+		Secure:   true,
+		HttpOnly: true,
+
+		Expires: time.Now().Add(1 * time.Hour),
+
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	http.SetCookie(w, &cookie)
+
 	responseBody := rest.ReqForPasswordResetResponse{PipeId: pipeID}
 
 	response, err := json.Marshal(responseBody)
@@ -366,7 +382,7 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		Path: refreshTokenCookiePath,
 
 		// TODO: enable secure cookie to ensure that the cookie is transferring only through https
-		// Secure:   true,
+		Secure:   true,
 		HttpOnly: true,
 
 		// TODO: add expiration time for refresh token -> time.Now().Add(365 * 24 * time.Hour)

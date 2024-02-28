@@ -233,6 +233,7 @@ func readEncryptedPassword(ctx context.Context, t *testing.T, accountID string) 
 	preparedAccountID, err := prepareIDForStorage(accountID)
 	assert.NoError(t, err)
 
+	// TODO: get rid of deprecated subtype
 	filter := bson.M{"_id": primitive.Binary{
 		Subtype: bsontype.BinaryUUID,
 		Data:    preparedAccountID,

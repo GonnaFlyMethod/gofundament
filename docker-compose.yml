@@ -63,9 +63,11 @@ services:
       - REDIS_PASSWORD=${IN_MEMORY_STORAGE_PASSWORD}
     ports:
       - '${IN_MEMORY_STORAGE_PORT}:${IN_MEMORY_STORAGE_PORT}'
-    command: redis-server --protected-mode no  # Protected mode should be turned on, make research about it
+    command: redis-server --protected-mode no --appendonly yes  # Protected mode should be turned on, make research about it
     volumes:
       - redis_data:/data
+
+  # TODO: add additional redis node - (Primary - Secondary interactions)
 
   tests_only:
     build:
