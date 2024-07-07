@@ -47,7 +47,9 @@ run_test_env:  ## Runs test environment for application in foreground for local 
 run_tests_in_docker:  ## Runs redis and db cluster in docker environment. Then runs tests in docker environment as well.
 	docker compose up -d --build mongo1 mongo2 redis
 	docker compose build tests_only
-	docker compose run --rm tests_only go test -p 1 ./...
+
+	# Running each test sequentially -p 1. Each test is run 3 times, with race detector enabled
+	docker compose run --rm tests_only go test -p 1 -count=3 -race ./...
 
 
 .PHONY: gen

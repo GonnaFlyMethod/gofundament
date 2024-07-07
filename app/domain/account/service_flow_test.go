@@ -74,6 +74,7 @@ func TestService_RegistrationFlow(t *testing.T) {
 		}
 
 		pipeID, err := service.StartSignUpPipe(ctx, startSignUpPipeDto)
+
 		common.AssertClientSideError(t, err)
 		assert.Empty(t, pipeID)
 
