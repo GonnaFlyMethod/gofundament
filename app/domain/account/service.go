@@ -96,6 +96,9 @@ func (s *Service) StartSignUpPipe(ctx context.Context, dto *StartSignUpPipeDTO) 
 		return "", err
 	}
 
+	fmt.Println("provided captcha answer: ", dto.ProvidedCaptchaAnswer)
+	fmt.Println("correct captcha answer: ", correctCaptchaAnswer)
+
 	if dto.ProvidedCaptchaAnswer != correctCaptchaAnswer {
 		if err := s.inMemoryStorage.DeleteCaptchaAnswer(ctx, dto.CaptchaID); err != nil {
 			return "", err
